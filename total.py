@@ -20,17 +20,17 @@ prompt_template_food = PromptTemplate(
     input_variables=["country"],
 )
 
-prompt_template_recipy = PromptTemplate(
-    template="Tell me about {food} recipy",
+prompt_template_recipe = PromptTemplate(
+    template="Tell me about {food} recipe",
     input_variables=["food"],
 )
 
 food_chain = prompt_template_food | llm | output_parser
 # print(food_chain.invoke({"country":"Italy"}))
 
-recipy_chain = prompt_template_recipy | llm | output_parser
-# print(recipy_chain.invoke({"food":"pizza"}))
+recipe_chain = prompt_template_recipe | llm | output_parser
+# print(recipe_chain.invoke({"food":"pizza"}))
 
 
-total_chain = {"counry":RunnablePassthrough()} | {"food":food_chain} | recipy_chain
+total_chain = {"country":RunnablePassthrough()} | {"food":food_chain} | recipe_chain
 print(total_chain.invoke('korea'))
