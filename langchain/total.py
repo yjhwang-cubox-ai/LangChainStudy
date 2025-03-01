@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnablePassthrough
 # 모델 불러오기
 llm = ChatOllama(model='llama3.2:1b')
 
-# print(llm.invoke('what is the capital of China?'))
+print(llm.invoke('what is the capital of Italy?'))
 
 output_parser = StrOutputParser()
 # print(output_parser.invoke(llm.invoke('what is the capital of China?')))
