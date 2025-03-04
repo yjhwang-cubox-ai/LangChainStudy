@@ -14,15 +14,14 @@ class AIBot:
         self.llm = ChatOpenAI(model='gpt-4o-mini')
         self.prompt = hub.pull("rlm/rag-prompt")
 
+
     def _read_database(self):
         load_dotenv()
         embedding = OpenAIEmbeddings(model="text-embedding-3-large")
         index_name = 'test'
-        pinecone_api_key = os.getenv("PINECONE_API_KEY")
-        return PineconeVectorStore(index_name=index_name, embedding=embedding)
+        return PineconeVectorStore.from_existing_index(index_name=index_name, embedding=embedding)
     
-    def get_ai_message(self, query):
-
+    def _get_dcitionary_chain(self):
         dictionary = ["사람과 관련된 표현 -> 거주자"]
         dictionary_prompt = ChatPromptTemplate.from_template(f"""
             사용자의 질문을 보고, 우리의 사전을 참고 해서 사용자의 질문을 변경해주세요.
@@ -34,13 +33,28 @@ class AIBot:
 
         dictionary_chain = dictionary_prompt | self.llm | StrOutputParser()
 
+        return dictionary_chain
+    
+    
+    def _get_retriever(self):        
+        return self.database.as_retriever(search_kwargs={"k": 3})
+    
+    
+    def _get_qa_chain(self):
         qa_chain = RetrievalQA.from_chain_type(
             self.llm,
-            retriever=self.database.as_retriever(search_kwargs={"k": 3}),
+            retriever=self._get_retriever(),
             chain_type_kwargs={"prompt":self.prompt}
-        )        
+        )
 
+        return qa_chain
+
+    
+    def get_ai_message(self, user_message):
+        dictionary_chain = self._get_dcitionary_chain()
+        qa_chain = self._get_qa_chain()        
         tax_chain = {"query": dictionary_chain} | qa_chain
+        ai_message = tax_chain.invoke({"query": user_message})
+        print(ai_message)
 
-        # print(tax_chain.invoke({"query": query}))
-        return tax_chain.invoke({"query": query})['result']
+        return ai_message['result']
